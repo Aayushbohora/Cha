@@ -4,13 +4,20 @@ import os
 
 app = Flask(__name__)
 
-# Get your Groq API key from environment variable (safer than hardcoding)
+# Groq API key from Render environment variable
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+@app.route("/", methods=["GET"])
+def home():
+    return "🤖 Human-like Chatbot Backend is running!"
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.json
+    data = request.get_json()
     user_message = data.get("message", "")
+
+    if not user_message:
+        return jsonify({"reply": "⚠️ No message received."})
 
     payload = {
         "model": "llama3-8b-8192",
@@ -25,15 +32,20 @@ def chat():
         "Content-Type": "application/json"
     }
 
-    response = requests.post("https://api.groq.com/openai/v1/chat/completions",
-                             json=payload, headers=headers)
-
-    if response.status_code == 200:
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers
+        )
+        response.raise_for_status()
         reply = response.json()["choices"][0]["message"]["content"]
-    else:
-        reply = "⚠️ Error: Could not reach Groq API."
+    except Exception as e:
+        reply = f"⚠️ Error: {str(e)}"
 
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    # Render uses PORT environment variable
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
