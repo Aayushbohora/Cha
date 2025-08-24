@@ -1,0 +1,5 @@
+{
+  "apiUrl": "https://api.groq.com/openai/v1/chat/completions",
+  "apiKey": "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",
+  "model": "llama-3.3-70b-versatile"
+}
